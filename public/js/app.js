@@ -67542,9 +67542,10 @@ Vue.component('events-calendar', {
   data: function data() {
     return {
       isLoading: false,
+      isSaving: false,
       today: moment__WEBPACK_IMPORTED_MODULE_0___default()(),
       dateCursor: moment__WEBPACK_IMPORTED_MODULE_0___default()(),
-      days: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+      days: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
       bgColors: ['#7ebdb4', '#f6d198', '#f6acc8', '#ccafaf'],
       events: [{
         "date": 2,
@@ -67576,8 +67577,13 @@ Vue.component('events-calendar', {
       },
       newEvent: {
         name: '',
-        date: ''
-      }
+        start: '',
+        end: '',
+        rrule: []
+      },
+      errors: [],
+      msgError: '',
+      msgSuccess: ''
     };
   },
   mounted: function mounted() {
@@ -67664,13 +67670,30 @@ Vue.component('events-calendar', {
     addEventModal: function addEventModal() {
       $('#addEventModal').modal('show');
     },
-    submitEventModal: function submitEventModal() {
+    submitNewEvent: function submitNewEvent() {
+      var _this2 = this;
+
+      if (this.isSaving) {
+        return false;
+      }
+
+      this.isSaving = true;
+      axios.post('/api/events', this.newEvent).then(function (response) {
+        _this2.errors = [];
+        _this2.msgSuccess = 'event has been successfully saved.';
+        _this2.msgError = '';
+        _this2.isSaving = false; // $('#addEventModal').modal('hide');
+      })["catch"](function (error) {
+        _this2.errors = error.response.data.errors;
+        _this2.msgError = 'Error in saving new event.';
+        _this2.msgSuccess = '';
+        _this2.isSaving = false;
+      });
       this.events.push({
-        "date": this.newEvent.date,
+        "date": this.newEvent.start,
         "name": this.newEvent.name,
         "duration": 3
-      });
-      $('#addEventModal').modal('hide');
+      }); // $('#addEventModal').modal('hide');
     },
     viewAllDateEvents: function viewAllDateEvents(date) {
       this.selectedDate = date;

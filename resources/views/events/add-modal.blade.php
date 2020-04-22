@@ -8,20 +8,44 @@
 				</button>
 			</div>
 			<div class="modal-body">
-				<div class="mb-2">
+				<div class="mb-3">
 					Event Name
-                	<input type="text" v-model="newEvent.name" class="form-control">
+					<input type="text" v-model="newEvent.name" class="form-control">
+					<small v-cloak class="text-danger" 
+						v-if="errors.name" 
+						v-for="err in errors.name"
+					>@{{err}}</small>
 				</div>
 
-				<div class="mb-2">
-					Date
-                	<input type="text" v-model="newEvent.date" class="form-control">
+				<div class="mb-3">
+					Start Date
+					<input type="date" v-model="newEvent.start" class="form-control">
+					<small v-cloak class="text-danger" 
+						v-if="errors.start" 
+						v-for="err in errors.start"
+					>@{{err}}</small>
+				</div>
+				<div class="mb-3">
+					End Date
+					<input type="date" v-model="newEvent.end" class="form-control">
+					<small v-cloak class="text-danger" 
+						v-if="errors.end" 
+						v-for="err in errors.end"
+					>@{{err}}</small>
+				</div>
+				<div class="mb-3">
+					<div>Recurrence Rules</div>
+					<div class="form-check form-check-inline mr-3" v-for="(day, index) in days" :key="index">
+						<input class="form-check-input" type="checkbox" :id="'repeat'+day" :value="day" v-model="newEvent.rrule">
+						<label class="form-check-label" :for="'repeat'+day">@{{day}}</label>
+					</div>
 				</div>
 			</div>
 			<div class="modal-footer justify-content-center"> 
-            	<button class="btn-primary btn" @click="submitEventModal">
-            		Submit New Event
-            	</button> 
+				<button class="btn-primary btn" @click="submitNewEvent" :disabledxxxx="isSaving">
+					<span v-if="isSaving">Submitting...</span>
+					<span v-else>Submit New Event</span> 
+				</button> 
 			</div>
 		</div>
 	</div>

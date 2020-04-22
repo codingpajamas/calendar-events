@@ -6,9 +6,10 @@ Vue.component('events-calendar', {
     data() {
         return {
             isLoading: false,
+            isSaving: false,
             today: moment(),
             dateCursor: moment(),
-            days: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
+            days: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
             bgColors: ['#7ebdb4', '#f6d198', '#f6acc8', '#ccafaf'],
             events: [
                 {"date": 2, "name": 'Event 1', "duration": 1},
@@ -26,8 +27,13 @@ Vue.component('events-calendar', {
             },
             newEvent: {
                 name: '',
-                date: ''
-            }
+                start: '',
+                end: '',
+                rrule: []
+            },
+            errors: [],
+            msgError: '',
+            msgSuccess: '',
         }
     }, 
 
@@ -117,14 +123,35 @@ Vue.component('events-calendar', {
         addEventModal() {
             $('#addEventModal').modal('show');
         },   
-        submitEventModal() {
+        submitNewEvent() {
+            if(this.isSaving){
+                return false;
+            }
+
+            this.isSaving = true; 
+
+            axios.post('/api/events', this.newEvent)
+                .then((response)=>{ 
+                    this.errors = []; 
+                    this.msgSuccess = 'event has been successfully saved.';
+                    this.msgError = '';
+                    this.isSaving = false; 
+
+                    // $('#addEventModal').modal('hide');
+                }).catch((error)=>{ 
+                    this.errors = error.response.data.errors;
+                    this.msgError = 'Error in saving new event.';
+                    this.msgSuccess = '';
+                    this.isSaving = false;
+                }); 
+
             this.events.push({
-                "date": this.newEvent.date, 
+                "date": this.newEvent.start, 
                 "name": this.newEvent.name, 
                 "duration": 3
             })
 
-            $('#addEventModal').modal('hide');
+            // $('#addEventModal').modal('hide');
         },
         viewAllDateEvents(date) {
             this.selectedDate = date;
