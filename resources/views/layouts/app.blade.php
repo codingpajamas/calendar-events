@@ -50,7 +50,7 @@
         }
         .date-events {
             position: absolute;
-            bottom: 0px;
+            top: 35px;
             right: 0px;
             width: 100%;
             display: block;

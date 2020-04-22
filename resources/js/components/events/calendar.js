@@ -13,16 +13,26 @@ Vue.component('events-calendar', {
             events: [
                 {"date": 2, "name": 'Event 1', "duration": 1},
                 {"date": 2, "name": 'Event Long Name', "duration": 3},
+                {"date": 2, "name": 'Just Another Event', "duration": 3},
                 {"date": 20, "name": 'How are you', "duration": 3},
                 {"date": 25, "name": 'Vacation Time', "duration": 3},
             ],
             selectedEvent: {
                 name: ''
+            },
+            selectedDate: {
+                date: '',
+                events: []
+            },
+            newEvent: {
+                name: '',
+                date: ''
             }
         }
     }, 
 
     mounted() {  
+        console.log(this.datesWithEvents);
         this.getEvents(); 
 
          $('editEventModal').on('hide.bs.modal', (e) => {
@@ -57,6 +67,18 @@ Vue.component('events-calendar', {
         },
         initialYear: function () { 
             return this.today.format('Y');
+        },
+        datesWithEvents: function() {
+            let dates = [];
+
+            for (let days = 1; days <= this.daysInMonth; days++) { 
+                dates.push({
+                    "date": days,
+                    "events": this.getThisDateEvents(days)
+                })
+            }
+
+            return dates;
         }
     },
 
@@ -83,13 +105,30 @@ Vue.component('events-calendar', {
         },
         editEvent(event) { 
             this.selectedEvent = event;
+            $('#dateEventModal').modal('hide');
             $('#editEventModal').modal('show');
         },
         saveEvent() {
-            console.log('saved:', this.selectedEvent)
+            console.log('saved:', this.selectedEvent) 
         },
         deleteEvent() {
             console.log('deleted:', this.selectedEvent)
+        },
+        addEventModal() {
+            $('#addEventModal').modal('show');
+        },   
+        submitEventModal() {
+            this.events.push({
+                "date": this.newEvent.date, 
+                "name": this.newEvent.name, 
+                "duration": 3
+            })
+
+            $('#addEventModal').modal('hide');
+        },
+        viewAllDateEvents(date) {
+            this.selectedDate = date;
+            $('#dateEventModal').modal('show');
         }
     }
 });
