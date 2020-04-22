@@ -38,7 +38,7 @@
             height: 100px;
             position: relative;
         }
-        .current-day span {
+        .current-day span.date-num {
             background: #007bff;
             width: 30px;
             height: 30px;
@@ -46,8 +46,22 @@
             text-align: center;
             display: inline-block;
             border-radius: 50%;
-            color: #fff;
-
+            color: #fff; 
+        }
+        .date-events {
+            position: absolute;
+            bottom: 0px;
+            right: 0px;
+            width: 100%;
+            display: block;
+        }
+        .event-item {
+            display: block; 
+            height: 20px;
+            line-height: 20px;
+            text-indent: 10px;
+            font-size: 11px;
+            cursor: pointer;
         }
     </style>
 </head>

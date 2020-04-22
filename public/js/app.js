@@ -67541,33 +67541,58 @@ Vue.component('events-calendar', {
   props: [],
   data: function data() {
     return {
-      title: 'Calendar',
       isLoading: false,
       today: moment__WEBPACK_IMPORTED_MODULE_0___default()(),
-      dateContext: moment__WEBPACK_IMPORTED_MODULE_0___default()(),
+      dateCursor: moment__WEBPACK_IMPORTED_MODULE_0___default()(),
       days: ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'],
-      events: []
+      bgColors: ['#7ebdb4', '#f6d198', '#f6acc8', '#ccafaf'],
+      events: [{
+        "date": 2,
+        "name": 'Event 1',
+        "duration": 1
+      }, {
+        "date": 2,
+        "name": 'Event Long Name',
+        "duration": 3
+      }, {
+        "date": 20,
+        "name": 'How are you',
+        "duration": 3
+      }, {
+        "date": 25,
+        "name": 'Vacation Time',
+        "duration": 3
+      }],
+      selectedEvent: {
+        name: ''
+      }
     };
   },
   mounted: function mounted() {
+    var _this = this;
+
     this.getEvents();
-    console.log(this.today, this.year, this.month, this.firstDayOfMonth, this.initialYear);
+    $('editEventModal').on('hide.bs.modal', function (e) {
+      _this.selectedEvent = {
+        name: ''
+      };
+    });
   },
   computed: {
     year: function year() {
-      return this.dateContext.format('Y');
+      return this.dateCursor.format('Y');
     },
     month: function month() {
-      return this.dateContext.format('MMMM');
+      return this.dateCursor.format('MMMM');
     },
     daysInMonth: function daysInMonth() {
-      return this.dateContext.daysInMonth();
+      return this.dateCursor.daysInMonth();
     },
     currentDate: function currentDate() {
-      return this.dateContext.get('date');
+      return this.dateCursor.get('date');
     },
     firstDayOfMonth: function firstDayOfMonth() {
-      var firstDay = moment__WEBPACK_IMPORTED_MODULE_0___default()(this.dateContext).subtract(this.currentDate - 1, 'days');
+      var firstDay = moment__WEBPACK_IMPORTED_MODULE_0___default()(this.dateCursor).subtract(this.currentDate - 1, 'days');
       return firstDay.weekday();
     },
     initialDate: function initialDate() {
@@ -67589,10 +67614,26 @@ Vue.component('events-calendar', {
       this.isLoading = false;
     },
     addMonth: function addMonth() {
-      this.dateContext = moment__WEBPACK_IMPORTED_MODULE_0___default()(this.dateContext).add(1, 'month');
+      this.dateCursor = moment__WEBPACK_IMPORTED_MODULE_0___default()(this.dateCursor).add(1, 'month');
     },
     subtractMonth: function subtractMonth() {
-      this.dateContext = moment__WEBPACK_IMPORTED_MODULE_0___default()(this.dateContext).subtract(1, 'month');
+      this.dateCursor = moment__WEBPACK_IMPORTED_MODULE_0___default()(this.dateCursor).subtract(1, 'month');
+    },
+    getThisDateEvents: function getThisDateEvents(date) {
+      var events = this.events.filter(function (event) {
+        return event['date'] == date;
+      });
+      return events;
+    },
+    editEvent: function editEvent(event) {
+      this.selectedEvent = event;
+      $('#editEventModal').modal('show');
+    },
+    saveEvent: function saveEvent() {
+      console.log('saved:', this.selectedEvent);
+    },
+    deleteEvent: function deleteEvent() {
+      console.log('deleted:', this.selectedEvent);
     }
   }
 });
