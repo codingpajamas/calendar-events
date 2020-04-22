@@ -42,7 +42,7 @@
 				</div>
 			</div>
 			<div class="modal-footer justify-content-center"> 
-				<button class="btn-primary btn" @click="submitNewEvent" :disabledxxxx="isSaving">
+				<button class="btn-primary btn" @click="saveNewEvent" :disabled="isSaving">
 					<span v-if="isSaving">Submitting...</span>
 					<span v-else>Submit New Event</span> 
 				</button> 

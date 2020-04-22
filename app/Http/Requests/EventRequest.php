@@ -16,9 +16,8 @@ class EventRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
-            'start' => 'required|date|date_format:Y-m-d|before:end',
-            'end' => 'nullable|date|date_format:Y-m-d|after:start',
-            // 'required|date|date_format:Y-m-d|before:end_at', 
+            'start' => 'required|date|date_format:Y-m-d|before_or_equal:end',
+            'end' => 'nullable|date|date_format:Y-m-d|after_or_equal:start'
         ];
     }
 }

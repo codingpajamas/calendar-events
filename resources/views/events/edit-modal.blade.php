@@ -8,14 +8,44 @@
 				</button>
 			</div>
 			<div class="modal-body">
-				Event Name
-                <input type="text" v-model="selectedEvent.name" class="form-control">
+				<div class="mb-3">
+					Event Name
+					<input type="text" v-model="selectedEvent.name" class="form-control">
+					<small v-cloak class="text-danger" 
+						v-if="errors.name" 
+						v-for="err in errors.name"
+					>@{{err}}</small>
+				</div>
+
+				<div class="mb-3">
+					Start Date
+					<input type="date" v-model="selectedEvent.start" class="form-control">
+					<small v-cloak class="text-danger" 
+						v-if="errors.start" 
+						v-for="err in errors.start"
+					>@{{err}}</small>
+				</div>
+				<div class="mb-3">
+					End Date
+					<input type="date" v-model="selectedEvent.end" class="form-control">
+					<small v-cloak class="text-danger" 
+						v-if="errors.end" 
+						v-for="err in errors.end"
+					>@{{err}}</small>
+				</div>
+				<div class="mb-3">
+					<div>Recurrence Rules</div>
+					<div class="form-check form-check-inline mr-3" v-for="(day, index) in days" :key="index">
+						<input class="form-check-input" type="checkbox" :id="'repeat'+day" :value="day" v-model="selectedEvent.rrule">
+						<label class="form-check-label" :for="'repeat'+day">@{{day}}</label>
+					</div>
+				</div>
 			</div>
 			<div class="modal-footer justify-content-center">
 				<button class="btn-danger btn" @click="deleteEvent">
             		<i class="fa fa-trash"></i>
             	</button>
-            	<button class="btn-primary btn" @click="saveEvent">
+            	<button class="btn-primary btn" @click="saveEditEvent">
             		Save Changes
             	</button> 
 			</div>

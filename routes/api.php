@@ -20,4 +20,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 
 
 Route::post('/events', 'EventController@store')->name('events.store');
+Route::put('/events/{event}', 'EventController@update')->name('events.update');
+Route::delete('/events/{event}', 'EventController@destroy')->name('events.destroy');
+
 Route::get('/schedules', 'ScheduleController@index')->name('schedules.index');

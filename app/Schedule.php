@@ -17,4 +17,14 @@ class Schedule extends Model
     {
     	return $this->belongsTo(Event::class);
     } 
+
+    public function scopeOfRange($query, $strStart, $strEnd)
+    {
+        if($strStart && $strEnd)
+        {
+            return $query->whereBetween('started_at', [$strStart, $strEnd]);
+        }
+
+        return $query;
+    }
 }

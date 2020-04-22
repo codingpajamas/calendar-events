@@ -67541,35 +67541,18 @@ Vue.component('events-calendar', {
   props: [],
   data: function data() {
     return {
+      isDeleting: false,
       isLoading: false,
       isSaving: false,
       today: moment__WEBPACK_IMPORTED_MODULE_0___default()(),
       dateCursor: moment__WEBPACK_IMPORTED_MODULE_0___default()(),
       days: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
       bgColors: ['#7ebdb4', '#f6d198', '#f6acc8', '#ccafaf'],
-      events: [{
-        "date": 2,
-        "name": 'Event 1',
-        "duration": 1
-      }, {
-        "date": 2,
-        "name": 'Event Long Name',
-        "duration": 3
-      }, {
-        "date": 2,
-        "name": 'Just Another Event',
-        "duration": 3
-      }, {
-        "date": 20,
-        "name": 'How are you',
-        "duration": 3
-      }, {
-        "date": 25,
-        "name": 'Vacation Time',
-        "duration": 3
-      }],
+      events: [],
       selectedEvent: {
-        name: ''
+        name: '',
+        rrule: [],
+        hash: ''
       },
       selectedDate: {
         date: '',
@@ -67589,7 +67572,6 @@ Vue.component('events-calendar', {
   mounted: function mounted() {
     var _this = this;
 
-    console.log(this.datesWithEvents);
     this.getEvents();
     $('editEventModal').on('hide.bs.modal', function (e) {
       _this.selectedEvent = {
@@ -67634,21 +67616,48 @@ Vue.component('events-calendar', {
       }
 
       return dates;
+    },
+    rangeFilter: function rangeFilter() {
+      return {
+        start: this.year + '-' + this.dateCursor.format('M') + '-01',
+        end: this.year + '-' + this.dateCursor.format('M') + '-' + this.daysInMonth
+      };
     }
   },
   methods: {
-    getEvents: function getEvents(page) {
+    getEvents: function getEvents() {
+      var _this2 = this;
+
+      this.events = [];
+
       if (this.isLoading) {
         return false;
       }
 
+      axios.get('/api/schedules', {
+        params: this.rangeFilter
+      }).then(function (response) {
+        response.data.data.forEach(function (evSched) {
+          _this2.events.push({
+            "date": evSched.date,
+            "name": evSched.event.name,
+            "hash": evSched.event.hash,
+            "start": evSched.event.start,
+            "end": evSched.event.end,
+            "rrule": evSched.event.repeat
+          });
+        });
+        console.log(_this2.events);
+      })["catch"](function (error) {});
       this.isLoading = false;
     },
     addMonth: function addMonth() {
       this.dateCursor = moment__WEBPACK_IMPORTED_MODULE_0___default()(this.dateCursor).add(1, 'month');
+      this.getEvents();
     },
     subtractMonth: function subtractMonth() {
       this.dateCursor = moment__WEBPACK_IMPORTED_MODULE_0___default()(this.dateCursor).subtract(1, 'month');
+      this.getEvents();
     },
     getThisDateEvents: function getThisDateEvents(date) {
       var events = this.events.filter(function (event) {
@@ -67661,39 +67670,74 @@ Vue.component('events-calendar', {
       $('#dateEventModal').modal('hide');
       $('#editEventModal').modal('show');
     },
-    saveEvent: function saveEvent() {
-      console.log('saved:', this.selectedEvent);
-    },
-    deleteEvent: function deleteEvent() {
-      console.log('deleted:', this.selectedEvent);
-    },
-    addEventModal: function addEventModal() {
-      $('#addEventModal').modal('show');
-    },
-    submitNewEvent: function submitNewEvent() {
-      var _this2 = this;
+    saveEditEvent: function saveEditEvent() {
+      var _this3 = this;
 
       if (this.isSaving) {
         return false;
       }
 
       this.isSaving = true;
-      axios.post('/api/events', this.newEvent).then(function (response) {
-        _this2.errors = [];
-        _this2.msgSuccess = 'event has been successfully saved.';
-        _this2.msgError = '';
-        _this2.isSaving = false; // $('#addEventModal').modal('hide');
+      axios.post('/api/events/' + this.selectedEvent.hash + '?_method=PUT', this.selectedEvent).then(function (response) {
+        _this3.errors = [];
+        _this3.msgSuccess = 'event changes has been successfully saved.';
+        _this3.msgError = '';
+        _this3.isSaving = false;
+        $('#editEventModal').modal('hide');
       })["catch"](function (error) {
-        _this2.errors = error.response.data.errors;
-        _this2.msgError = 'Error in saving new event.';
-        _this2.msgSuccess = '';
-        _this2.isSaving = false;
+        _this3.errors = error.response.data.errors;
+        _this3.msgError = 'Error in saving event changes.';
+        _this3.msgSuccess = '';
+        _this3.isSaving = false;
       });
-      this.events.push({
-        "date": this.newEvent.start,
-        "name": this.newEvent.name,
-        "duration": 3
-      }); // $('#addEventModal').modal('hide');
+      this.getEvents();
+    },
+    deleteEvent: function deleteEvent() {
+      var _this4 = this;
+
+      if (this.isDeleting) {
+        return false;
+      }
+
+      this.isDeleting = true;
+      axios["delete"]('/api/events/' + this.selectedEvent.hash).then(function (response) {
+        _this4.isDeleting = false;
+        $('#editEventModal').modal('hide');
+      })["catch"](function (error) {
+        _this4.isDeleting = false;
+      });
+      this.getEvents();
+    },
+    addEventModal: function addEventModal() {
+      $('#addEventModal').modal('show');
+    },
+    saveNewEvent: function saveNewEvent() {
+      var _this5 = this;
+
+      if (this.isSaving) {
+        return false;
+      }
+
+      this.isSaving = true;
+
+      if (!this.newEvent.end) {
+        this.newEvent.end = this.newEvent.start;
+      }
+
+      axios.post('/api/events', this.newEvent).then(function (response) {
+        _this5.errors = [];
+        _this5.msgSuccess = 'event has been successfully saved.';
+        _this5.msgError = '';
+        _this5.isSaving = false;
+        $('#addEventModal').modal('hide');
+      })["catch"](function (error) {
+        _this5.errors = error.response.data.errors;
+        _this5.msgError = 'Error in saving new event.';
+        _this5.msgSuccess = '';
+        _this5.isSaving = false;
+      }); // just fetch event schedules for this month
+
+      this.getEvents();
     },
     viewAllDateEvents: function viewAllDateEvents(date) {
       this.selectedDate = date;

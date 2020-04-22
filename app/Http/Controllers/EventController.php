@@ -49,8 +49,65 @@ class EventController extends Controller
                 'errors' => [], 
                 'message' => 'Unable to save new event'
             ], 422);
-        } 
+        }
 
+        // save event schedules
+        $this->saveScheduleDates($objEvent, $start, $end, $request);
+
+        return response()->json([ 
+            'message' => 'New event was saved successfully'
+        ], 200);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Event  $event
+     * @return \Illuminate\Http\Response
+     */
+    public function update(EventRequest $request, Event $event)
+    {
+        // construct the variables
+        $rrule = $request->input('rrule', []); 
+        $start = $request->start ? Carbon::createFromFormat('Y-m-d', $request->start) : null;
+        $end = $request->end ? Carbon::createFromFormat('Y-m-d', $request->end) : $start;
+
+        // save the event changes
+        $event->update([
+            'name' => $request->name,
+            'repeat' => $request->rrule,
+            'started_at' => $start,
+            'ended_at' => $end
+        ]);
+
+        // reset event schedules
+        $event->schedules()->delete();
+        $this->saveScheduleDates($event, $start, $end, $request);
+
+        return response()->json([ 
+            'message' => 'New event was saved successfully'
+        ], 200);
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Event  $event
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Event $event)
+    {
+        $event->schedules()->delete();
+        $event->delete();
+
+        return response()->json([ 
+            'message' => 'Event was deleted'
+        ], 200);
+    }
+
+    protected function saveScheduleDates($objEvent, $start, $end, $request)
+    {
         // generate the event schedules by day
         // this is not necessary if we use calendar plugin
         // in the frontend like "fullcalendar"
@@ -82,30 +139,5 @@ class EventController extends Controller
 
         // bulk create schedules
         Schedule::insert($arrSchedules);
-
-        dd($eventDates, $arrSchedules);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Event  $event
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Event $event)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Event  $event
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Event $event)
-    {
-        //
     }
 }

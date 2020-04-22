@@ -5,21 +5,18 @@ Vue.component('events-calendar', {
 
     data() {
         return {
+            isDeleting: false,
             isLoading: false,
             isSaving: false,
             today: moment(),
             dateCursor: moment(),
             days: ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'],
             bgColors: ['#7ebdb4', '#f6d198', '#f6acc8', '#ccafaf'],
-            events: [
-                {"date": 2, "name": 'Event 1', "duration": 1},
-                {"date": 2, "name": 'Event Long Name', "duration": 3},
-                {"date": 2, "name": 'Just Another Event', "duration": 3},
-                {"date": 20, "name": 'How are you', "duration": 3},
-                {"date": 25, "name": 'Vacation Time', "duration": 3},
-            ],
+            events: [ ],
             selectedEvent: {
-                name: ''
+                name: '',
+                rrule: [],
+                hash: ''
             },
             selectedDate: {
                 date: '',
@@ -37,8 +34,7 @@ Vue.component('events-calendar', {
         }
     }, 
 
-    mounted() {  
-        console.log(this.datesWithEvents);
+    mounted() {
         this.getEvents(); 
 
          $('editEventModal').on('hide.bs.modal', (e) => {
@@ -85,22 +81,50 @@ Vue.component('events-calendar', {
             }
 
             return dates;
+        },
+        rangeFilter: function() {
+            return {
+                start: this.year + '-' + this.dateCursor.format('M') + '-01',
+                end: this.year + '-' + this.dateCursor.format('M') + '-' + this.daysInMonth
+            }
         }
     },
 
     methods: {
-        getEvents(page) {
+        getEvents() {
+            this.events = [];
+
             if(this.isLoading){
                 return false;
-            }
+            } 
+
+            axios.get('/api/schedules', { params: this.rangeFilter })
+                .then((response)=>{
+                    response.data.data.forEach(evSched => {
+                        this.events.push({
+                            "date": evSched.date, 
+                            "name": evSched.event.name,
+                            "hash": evSched.event.hash,
+                            "start": evSched.event.start,
+                            "end": evSched.event.end,
+                            "rrule": evSched.event.repeat
+                        })
+                    })
+
+                    console.log(this.events);
+                }).catch((error)=>{ 
+                     
+                }); 
             
             this.isLoading = false; 
         },
-        addMonth() { 
+        addMonth() {  
             this.dateCursor = moment(this.dateCursor).add(1, 'month');
+            this.getEvents()
         },
-        subtractMonth() { 
+        subtractMonth() {  
             this.dateCursor = moment(this.dateCursor).subtract(1, 'month');
+            this.getEvents()
         },
         getThisDateEvents(date) {
             let events = this.events.filter(event => {
@@ -114,21 +138,61 @@ Vue.component('events-calendar', {
             $('#dateEventModal').modal('hide');
             $('#editEventModal').modal('show');
         },
-        saveEvent() {
-            console.log('saved:', this.selectedEvent) 
-        },
-        deleteEvent() {
-            console.log('deleted:', this.selectedEvent)
-        },
-        addEventModal() {
-            $('#addEventModal').modal('show');
-        },   
-        submitNewEvent() {
+        saveEditEvent() { 
             if(this.isSaving){
                 return false;
             }
 
             this.isSaving = true; 
+
+            axios.post('/api/events/'+this.selectedEvent.hash+'?_method=PUT', this.selectedEvent)
+                .then((response)=>{ 
+                    this.errors = []; 
+                    this.msgSuccess = 'event changes has been successfully saved.';
+                    this.msgError = '';
+                    this.isSaving = false; 
+
+                    $('#editEventModal').modal('hide');
+                }).catch((error)=>{ 
+                    this.errors = error.response.data.errors;
+                    this.msgError = 'Error in saving event changes.';
+                    this.msgSuccess = '';
+                    this.isSaving = false;
+                }); 
+
+            this.getEvents();
+        },
+        deleteEvent() { 
+            if(this.isDeleting){
+                return false;
+            }
+
+            this.isDeleting = true; 
+
+            axios.delete('/api/events/'+this.selectedEvent.hash)
+                .then((response)=>{  
+                    this.isDeleting = false; 
+
+                    $('#editEventModal').modal('hide');
+                }).catch((error)=>{ 
+                    this.isDeleting = false;
+                }); 
+
+            this.getEvents();
+        },
+        addEventModal() {
+            $('#addEventModal').modal('show');
+        },   
+        saveNewEvent() {
+            if(this.isSaving){
+                return false;
+            }
+
+            this.isSaving = true; 
+
+            if(!this.newEvent.end) {
+                this.newEvent.end = this.newEvent.start
+            }
 
             axios.post('/api/events', this.newEvent)
                 .then((response)=>{ 
@@ -137,7 +201,7 @@ Vue.component('events-calendar', {
                     this.msgError = '';
                     this.isSaving = false; 
 
-                    // $('#addEventModal').modal('hide');
+                    $('#addEventModal').modal('hide');
                 }).catch((error)=>{ 
                     this.errors = error.response.data.errors;
                     this.msgError = 'Error in saving new event.';
@@ -145,13 +209,8 @@ Vue.component('events-calendar', {
                     this.isSaving = false;
                 }); 
 
-            this.events.push({
-                "date": this.newEvent.start, 
-                "name": this.newEvent.name, 
-                "duration": 3
-            })
-
-            // $('#addEventModal').modal('hide');
+            // just fetch event schedules for this month
+            this.getEvents();
         },
         viewAllDateEvents(date) {
             this.selectedDate = date;
