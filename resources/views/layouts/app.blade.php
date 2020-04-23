@@ -63,6 +63,7 @@
             font-size: 11px;
             cursor: pointer;
         }
+        [v-cloak] {display: none}
     </style>
 </head>
 <body>

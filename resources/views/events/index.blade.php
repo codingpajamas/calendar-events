@@ -6,7 +6,7 @@
         <div class="col-md-12">
            <events-calendar inline-template>
                 <div> 
-                    <div class="calendar">
+                    <div class="calendar" v-cloak>
                         <div class="calendar-header py-2 px-5 text-center">
                             <div class="d-inline-block mr-5">
                                 <a @click="subtractMonth" class="btn btn-default btn-sm">
