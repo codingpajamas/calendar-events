@@ -40,10 +40,16 @@
 						<label class="form-check-label" :for="'repeat'+day">@{{day}}</label>
 					</div>
 				</div>
+
+				<div v-cloak v-if="msgError" class="alert alert-danger">@{{msgError}}</div>
+				<div v-cloak v-if="msgSuccess" class="alert alert-success">@{{msgSuccess}}</div>
 			</div>
 			<div class="modal-footer justify-content-center"> 
 				<button class="btn-primary btn" @click="saveNewEvent" :disabled="isSaving">
-					<span v-if="isSaving">Submitting...</span>
+					<span v-if="isSaving">
+						<i class="fa fa-spin fa-cog"></i>
+						Submitting...
+					</span>
 					<span v-else>Submit New Event</span> 
 				</button> 
 			</div>

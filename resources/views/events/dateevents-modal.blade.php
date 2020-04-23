@@ -16,7 +16,7 @@
 					>
 						@{{event.name}}
 						
-						<button class="btn btn-sm" @click="editEvent(event)">
+						<button class="btn btn-sm" @click="openEditModal(event)">
 							<i class="fa fa-pencil"></i>
 						</button>  	 
 					</li> 

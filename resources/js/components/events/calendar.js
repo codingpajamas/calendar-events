@@ -35,41 +35,94 @@ Vue.component('events-calendar', {
     }, 
 
     mounted() {
+        // fetch the event schedules for the current month
         this.getEvents(); 
 
-         $('editEventModal').on('hide.bs.modal', (e) => {
+        // reset the selected event when closing the modal
+        $('#editEventModal').on('hide.bs.modal', (e) => {
             this.selectedEvent = {
-                name: ''
+                name: '',
+                rrule: [],
+                hash: ''
+            }
+
+            this.setMsg([], '', '');
+        });
+
+        // reset the form and errors when closing the modal
+        $('#addEventModal').on('hide.bs.modal', (e) => {
+            this.setMsg([], '', '');
+
+            this.newEvent = {
+                name: '',
+                start: '',
+                end: '',
+                rrule: []
             }
         })
     },  
 
     computed: {
+        /*
+        * get the current Year
+        */ 
         year: function() {
             return this.dateCursor.format('Y');
         },
+
+        /*
+        * get the current Month
+        */ 
         month: function() {
             return this.dateCursor.format('MMMM');
         },
+
+        /*
+        * get how many days in the current month
+        */ 
         daysInMonth: function () {
             return this.dateCursor.daysInMonth();
         },
+
+        /*
+        * 
+        */ 
         currentDate: function () {
             return this.dateCursor.get('date');
         },
+
+        /*
+        *  
+        */ 
         firstDayOfMonth: function () {
             var firstDay = moment(this.dateCursor).subtract((this.currentDate - 1), 'days');
             return firstDay.weekday();
         },
+
+        /*
+        *  
+        */ 
         initialDate: function () { 
             return this.today.get('date');
         },
+
+        /*
+        *  
+        */ 
         initialMonth: function () { 
             return this.today.format('MMMM');
         },
+
+        /*
+        * 
+        */ 
         initialYear: function () { 
             return this.today.format('Y');
         },
+
+        /*
+        * create an array of dates with events to loop in the calendar grid
+        */ 
         datesWithEvents: function() {
             let dates = [];
 
@@ -82,6 +135,10 @@ Vue.component('events-calendar', {
 
             return dates;
         },
+
+        /*
+        * create a query filter : start and end date of current month
+        */ 
         rangeFilter: function() {
             return {
                 start: this.year + '-' + this.dateCursor.format('M') + '-01',
@@ -91,6 +148,9 @@ Vue.component('events-calendar', {
     },
 
     methods: {
+        /*
+        * fetch all event schedules for the current month
+        */
         getEvents() {
             this.events = [];
 
@@ -109,35 +169,88 @@ Vue.component('events-calendar', {
                             "end": evSched.event.end,
                             "rrule": evSched.event.repeat
                         })
-                    })
-
-                    console.log(this.events);
+                    }) 
                 }).catch((error)=>{ 
                      
                 }); 
             
             this.isLoading = false; 
         },
+
+        /*
+        * adjust current month to next month
+        */
         addMonth() {  
             this.dateCursor = moment(this.dateCursor).add(1, 'month');
             this.getEvents()
         },
+
+        /*
+        * adjust current month to previous month
+        */
         subtractMonth() {  
             this.dateCursor = moment(this.dateCursor).subtract(1, 'month');
             this.getEvents()
         },
-        getThisDateEvents(date) {
-            let events = this.events.filter(event => {
-                return event['date'] == date;
-            })
 
-            return events;
+        /*
+        * open the daily events modal to display all events on that day 
+        * which are not displayed in the grid
+        */ 
+        viewAllDateEvents(date) {
+            this.selectedDate = date;
+            $('#dateEventModal').modal('show');
         },
-        editEvent(event) { 
+
+        /*
+        * open the add event modal
+        */ 
+        addEventModal() {
+            $('#addEventModal').modal('show');
+        }, 
+
+        /*
+        * open the edit event modal
+        */ 
+        openEditModal(event) { 
             this.selectedEvent = event;
             $('#dateEventModal').modal('hide');
             $('#editEventModal').modal('show');
         },
+
+        /*
+        * save the new event to database
+        */  
+        saveNewEvent() {
+            if(this.isSaving){
+                return false;
+            }
+
+            this.isSaving = true; 
+
+            if(!this.newEvent.end) {
+                this.newEvent.end = this.newEvent.start
+            }
+
+            axios.post('/api/events', this.newEvent)
+                .then((response)=>{ 
+                    this.setMsg([], response.data.message, '');
+                    
+                    // close modal
+                    setTimeout(()=>{
+                        $('#addEventModal').modal('hide');
+                    }, 500)
+                    
+                    // just fetch event schedules for this month
+                    this.getEvents(); 
+                }).catch((error)=>{ 
+                    this.setMsg(error.response.data.errors, '', error.response.data.message);
+                });  
+        },
+
+        /*
+        * save changes to datebase 
+        */ 
         saveEditEvent() { 
             if(this.isSaving){
                 return false;
@@ -146,22 +259,23 @@ Vue.component('events-calendar', {
             this.isSaving = true; 
 
             axios.post('/api/events/'+this.selectedEvent.hash+'?_method=PUT', this.selectedEvent)
-                .then((response)=>{ 
-                    this.errors = []; 
-                    this.msgSuccess = 'event changes has been successfully saved.';
-                    this.msgError = '';
-                    this.isSaving = false; 
+                .then((response)=>{  
+                    this.setMsg([], response.data.message, '');
 
-                    $('#editEventModal').modal('hide');
-                }).catch((error)=>{ 
-                    this.errors = error.response.data.errors;
-                    this.msgError = 'Error in saving event changes.';
-                    this.msgSuccess = '';
-                    this.isSaving = false;
-                }); 
+                    // close the modal
+                    setTimeout(()=>{
+                        $('#editEventModal').modal('hide');
+                    }, 500)
 
-            this.getEvents();
+                    this.getEvents();
+                }).catch((error)=>{
+                    this.setMsg(error.response.data.errors, '', error.response.data.message);
+                });  
         },
+
+        /*
+        * delete the event
+        */ 
         deleteEvent() { 
             if(this.isDeleting){
                 return false;
@@ -180,41 +294,23 @@ Vue.component('events-calendar', {
 
             this.getEvents();
         },
-        addEventModal() {
-            $('#addEventModal').modal('show');
-        },   
-        saveNewEvent() {
-            if(this.isSaving){
-                return false;
-            }
 
-            this.isSaving = true; 
+        /*
+        * helper function to get events for specific date
+        */ 
+        getThisDateEvents(date) {
+            let events = this.events.filter(event => {
+                return event['date'] == date;
+            })
 
-            if(!this.newEvent.end) {
-                this.newEvent.end = this.newEvent.start
-            }
-
-            axios.post('/api/events', this.newEvent)
-                .then((response)=>{ 
-                    this.errors = []; 
-                    this.msgSuccess = 'event has been successfully saved.';
-                    this.msgError = '';
-                    this.isSaving = false; 
-
-                    $('#addEventModal').modal('hide');
-                }).catch((error)=>{ 
-                    this.errors = error.response.data.errors;
-                    this.msgError = 'Error in saving new event.';
-                    this.msgSuccess = '';
-                    this.isSaving = false;
-                }); 
-
-            // just fetch event schedules for this month
-            this.getEvents();
+            return events;
         },
-        viewAllDateEvents(date) {
-            this.selectedDate = date;
-            $('#dateEventModal').modal('show');
+
+        setMsg(errs, msgSuccess, msgError) {
+            this.errors = errs; 
+            this.msgSuccess = msgSuccess;
+            this.msgError = msgError;
+            this.isSaving = false; 
         }
     }
 });

@@ -37,7 +37,7 @@
                                     <span class="event-item text-truncate"
                                         v-bind:style="{ backgroundColor: bgColors[evIndex] }"
                                         v-for="(event, evIndex) in date.events.slice(0,2)"
-                                        @click="editEvent(event)"
+                                        @click="openEditModal(event)"
                                     >@{{event['name']}}</span>
                                     
                                     <span class="event-item"

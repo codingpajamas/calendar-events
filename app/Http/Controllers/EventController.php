@@ -52,7 +52,7 @@ class EventController extends Controller
         }
 
         // save event schedules
-        $this->saveScheduleDates($objEvent, $start, $end, $request);
+        $this->saveScheduleDates($objEvent, $start, $end, $request, $rrule);
 
         return response()->json([ 
             'message' => 'New event was saved successfully'
@@ -83,10 +83,10 @@ class EventController extends Controller
 
         // reset event schedules
         $event->schedules()->delete();
-        $this->saveScheduleDates($event, $start, $end, $request);
+        $this->saveScheduleDates($event, $start, $end, $request, $rrule);
 
         return response()->json([ 
-            'message' => 'New event was saved successfully'
+            'message' => 'Event was updated successfully'
         ], 200);
     }
 
@@ -106,7 +106,12 @@ class EventController extends Controller
         ], 200);
     }
 
-    protected function saveScheduleDates($objEvent, $start, $end, $request)
+    /**
+     * Helper method to save event's schedule dates
+     * This is not necessary if we use calendar plugin that 
+     * supports recursion and date range
+     */
+    protected function saveScheduleDates($objEvent, $start, $end, $request, $rrule)
     {
         // generate the event schedules by day
         // this is not necessary if we use calendar plugin

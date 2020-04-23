@@ -17,6 +17,7 @@ class Schedule extends JsonResource
     {
         $objEvent = ['hash'=>null, 'name'=>null, 'start'=>null, 'end'=>null];
 
+        // check if "event" was lazy loaded before using to avoid n+1
         if($this->relationLoaded('event'))
         {
             $objEvent = [
